@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      run: docker build -t authface:latest .
+    
+    - name: Run validation checks
+      run: ./run_checks.sh
+    
+    - name: Test health endpoints
+      run: |
+        docker run -d --name authface-test -p 8080:8080 authface:latest
+        sleep 10
+        curl -f http://localhost:8080/health
+        curl -f http://localhost:8080/status
+        docker stop authface-test
+        docker rm authface-test

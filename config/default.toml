@@ -1,0 +1,35 @@
+# AuthFace Configuration
+
+[server]
+host = "0.0.0.0"
+port = 8080
+
+[auth]
+# OIDC configuration TTL in days
+oidc_ttl_days = 7
+# JWT token TTL in hours
+jwt_ttl_hours = 24
+
+[cloudflare]
+# Cloudflare KV configuration
+account_id = ""
+namespace_id = ""
+api_token = ""
+
+[security]
+# JWT signing key path (provided via Ansible vault)
+jwt_private_key_path = "/etc/authface/jwt_private_key.pem"
+jwt_public_key_path = "/etc/authface/jwt_public_key.pem"
+
+[oidc_providers]
+# Example OIDC provider configurations
+# These will be loaded from environment or config files
+[oidc_providers.google]
+client_id = ""
+client_secret = ""
+discovery_url = "https://accounts.google.com/.well-known/openid_configuration"
+
+[oidc_providers.github]
+client_id = ""
+client_secret = ""
+discovery_url = "https://token.actions.githubusercontent.com/.well-known/openid_configuration"
