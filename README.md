@@ -45,10 +45,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Then execute the pipeline:
+Then execute the pipeline using the package entry point:
 
 ```bash
-python scripts/run_pipeline.py --log-level DEBUG
+python -m collector --debug run
 ```
 
 A new release file will be created under `data/releases/`, and the feed trust state will be
@@ -61,6 +61,19 @@ management:
 
 ```bash
 pytest
+```
+
+To inspect coverage locally:
+
+```bash
+coverage run -m pytest
+coverage report
+```
+
+Static type checks are provided via mypy:
+
+```bash
+mypy collector
 ```
 
 ## Scheduled automation
