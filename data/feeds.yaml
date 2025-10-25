@@ -1,0 +1,30 @@
+- id: noaa_weather
+  url: https://www.weather.gov/rss_page.php?site_name=nws
+  type: rss
+  discovery: curated-list
+  geography: United States
+  trust: 0.7
+- id: reuters_world
+  url: https://www.reutersagency.com/feed/?best-topics=world-news&post_type=best
+  type: rss
+  discovery: curated-list
+  geography: Global
+  trust: 0.8
+- id: ap_top
+  url: https://apnews.com/apf-topnews?format=atom
+  type: atom
+  discovery: curated-list
+  geography: United States
+  trust: 0.8
+- id: google_trends_us
+  url: https://trends.google.com/trends/trendingsearches/daily/rss?geo=US
+  type: rss
+  discovery: google-trends
+  geography: United States
+  trust: 0.6
+- id: earthquakes_usgs
+  url: https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_hour.atom
+  type: atom
+  discovery: curated-list
+  geography: Global
+  trust: 0.75
