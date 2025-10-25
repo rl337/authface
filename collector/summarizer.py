@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from .fetcher import FeedEntry
 
@@ -19,17 +19,18 @@ class Summarizer:
 
     def __init__(self, model_name: str = "sshleifer/distilbart-cnn-12-6") -> None:
         self.model_name = model_name
-        self._pipeline: Optional[object] = None
+        self._pipeline: Optional[Callable[..., List[Dict[str, Any]]]] = None
+        self._fallback = False
 
     def ensure_loaded(self) -> None:
-        if self._pipeline is None and pipeline is not None:
+        if self._pipeline is None and not self._fallback and pipeline is not None:
             logger.info("Loading summarisation model %s", self.model_name)
             self._pipeline = pipeline("summarization", model=self.model_name)
         elif pipeline is None and self._pipeline is None:
             logger.warning(
                 "transformers is unavailable; falling back to extractive summaries"
             )
-            self._pipeline = False  # sentinel indicating fallback mode
+            self._fallback = True
 
     def summarize_cluster(self, cluster_index: int, entries: Iterable[FeedEntry]) -> str:
         texts: List[str] = []
@@ -40,7 +41,7 @@ class Summarizer:
         if not texts:
             return ""
         self.ensure_loaded()
-        if self._pipeline and pipeline is not None:
+        if self._pipeline is not None and pipeline is not None:
             combined = "\n".join(texts[:5])
             result = self._pipeline(
                 combined,
