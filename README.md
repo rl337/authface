@@ -1,118 +1,84 @@
-# AuthFace
+# Data correlation pipeline
 
-A memory-compact Rust service for multi-website authentication and authorization using OIDC providers.
+> **Repository description:** GitHub Actions pipeline that polls trusted public feeds twice
+> daily, correlates overlapping stories, and publishes structured releases with evolving
+> trust scores for each source.
 
-## Features
+This repository hosts an automated pipeline that polls trusted public feeds, correlates
+related stories, and emits structured data releases twice per day. GitHub Actions runs the
+pipeline on a fixed schedule to keep the feed trust scores and aggregated reports current.
 
-- **OIDC Authentication**: Support for multiple OIDC providers (Google, GitHub, etc.)
-- **JWT Token Issuance**: Secure JWT tokens with user tiers and expiration
-- **In-Memory Storage**: Fast, memory-efficient session storage with TTL
-- **Cloudflare KV Integration**: Persistent session storage with automatic serialization
-- **User Tiers**: Admin, Preferred, Normal, and Free user tiers
-- **Health Monitoring**: Built-in health and status endpoints
-- **Docker Support**: Container-ready with health checks
+## What the pipeline does
 
-## Architecture
+1. **Collect** – `scripts/run_pipeline.py` downloads each feed listed in
+   `data/feeds.yaml` concurrently. The feeds include RSS, Atom, and other structured
+   formats from weather, news, and trend sources.
+2. **Correlate** – entries are vectorised with TF–IDF and clustered with DBSCAN to detect
+   stories that multiple feeds are discussing.
+3. **Summarise** – a lightweight Hugging Face summarisation model
+   (`sshleifer/distilbart-cnn-12-6`) condenses each cluster into a readable synopsis.
+4. **Score trust** – feeds that corroborate other sources receive a trust bonus while
+   isolated stories incur a small penalty. Persisted trust levels live in
+   `data/feed_state.json` and are updated every run.
+5. **Publish** – the structured release is written to `data/releases/` with metadata about
+   the feeds, correlated keywords, geographic hints, and confidence scores.
 
-### Core Components
+## Repository layout
 
-- **OIDC Manager**: Handles authentication flows with various providers
-- **JWT Manager**: Creates and verifies JWT tokens with RSA signing
-- **Session Store**: In-memory storage with automatic cleanup
-- **Cloudflare KV Manager**: Persistent storage for session data
-
-### User Tiers
-
-- `admin`: Full access to all features
-- `preferred`: Enhanced features and priority
-- `normal`: Standard access level
-- `free`: Basic access level
-
-## API Endpoints
-
-### Health & Status
-- `GET /health` - Service health check
-- `GET /status` - Service status with metrics
-
-### Authentication
-- `GET /auth/:provider` - Initiate OIDC authentication
-- `GET /callback/:provider` - OIDC callback handler
-- `POST /token` - Generate JWT token from session
-- `POST /verify` - Verify JWT token
-
-## Configuration
-
-The service can be configured via environment variables or configuration files:
-
-```bash
-# Cloudflare KV (optional)
-CLOUDFLARE_ACCOUNT_ID=your_account_id
-CLOUDFLARE_NAMESPACE_ID=your_namespace_id
-CLOUDFLARE_API_TOKEN=your_api_token
-
-# JWT Keys (required)
-# Private key should be at /etc/authface/jwt_private_key.pem
-# Public key should be at /etc/authface/jwt_public_key.pem
+```
+collector/              # Core Python package for the pipeline
+  config.py             # Feed definition + state helpers
+  fetcher.py            # Asynchronous fetching and normalisation
+  processor.py          # Clustering, trust scoring, and payload assembly
+  summarizer.py         # Hugging Face-backed cluster summaries
+scripts/run_pipeline.py # CLI entry point invoked by CI or locally
+data/feeds.yaml         # Curated feed catalogue with metadata
 ```
 
-## Development
+## Running locally
 
-### Prerequisites
-
-- Docker
-- Rust (for local development)
-
-### Running Locally
+Create a Python virtual environment and install dependencies:
 
 ```bash
-# Build and run with Docker
-docker build -t authface .
-docker run -p 8080:8080 authface
-
-# Or run locally with Rust
-cargo run
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-### Testing
+Then execute the pipeline:
 
 ```bash
-# Run all checks
-./run_checks.sh
-
-# Run tests only
-cargo test
+python scripts/run_pipeline.py --log-level DEBUG
 ```
 
-## Docker Deployment
+A new release file will be created under `data/releases/`, and the feed trust state will be
+persisted to `data/feed_state.json`.
 
-The service is designed to run in a Docker container with the following requirements:
+### Tests
 
-- **Base Image**: `rl337/callableapis:base`
-- **Port**: 8080
-- **Health Check**: `/health` endpoint
-- **Status Check**: `/status` endpoint
+The repository ships with pytest-based unit tests covering clustering and state
+management:
 
-### Health Endpoints
+```bash
+pytest
+```
 
-- **Health**: Returns `{"status": "healthy"}` when service is operational
-- **Status**: Returns `{"status": "running"}` with session metrics
+## Scheduled automation
 
-## Security
+`.github/workflows/data-release.yml` provisions a twice-daily GitHub Actions run. The job
+performs the following steps:
 
-- JWT tokens are signed with RSA private keys
-- OIDC authentication follows standard security practices
-- Session data is stored securely in memory with TTL
-- Cloudflare KV provides encrypted persistent storage
+- installs Python dependencies,
+- executes the aggregation pipeline,
+- runs the unit test suite, and
+- commits updated release artefacts back to the repository (if anything changed).
 
-## Monitoring
+Every run also uploads the generated releases as workflow artefacts for downstream
+processing.
 
-The service integrates with the status monitoring system at https://status.callableapis.com/ when:
+## Extending the feed catalogue
 
-- Health endpoint returns `{"status": "healthy"}`
-- Status endpoint returns `{"status": "running"}`
-- Service is deployed to monitored nodes
-- Port 8080 is accessible
-
-## License
-
-MIT License
+Append new sources to `data/feeds.yaml` with their metadata, including discovery method,
+feed type, and any geographical hints. The next scheduled run will begin tracking the feed
+and adjust its trust score over time as it correlates (or fails to correlate) with other
+sources.

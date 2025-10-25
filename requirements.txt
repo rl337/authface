@@ -1,0 +1,6 @@
+aiohttp==3.9.3
+feedparser==6.0.11
+PyYAML==6.0.1
+transformers==4.39.3
+torch==2.2.2
+pytest==8.1.1
