@@ -97,3 +97,23 @@ def test_feed_state_roundtrip(tmp_path: Path, initial_state):
     save_feed_state(path, state)
     saved = json.loads(path.read_text())
     assert pytest.approx(saved["feed"]["trust_score"], rel=1e-3) == 0.77
+
+def test_update_trust_scores_penalises_isolated_entries():
+    entries = [make_entry("solo", "Unique story", "" )]
+    feed_state = {"solo": FeedState(identifier="solo", trust_score=0.05)}
+    update_trust_scores(feed_state, [(0, entries)], isolation_penalty=0.1)
+    assert feed_state["solo"].trust_score == 0.0
+
+
+def test_update_trust_scores_clamps_upper_bound():
+    entries = [
+        make_entry("a", "Shared event", ""),
+        make_entry("b", "Shared event", ""),
+    ]
+    feed_state = {
+        "a": FeedState(identifier="a", trust_score=0.98),
+        "b": FeedState(identifier="b", trust_score=0.99),
+    }
+    update_trust_scores(feed_state, [(0, entries)], correlation_bonus=0.1)
+    assert feed_state["a"].trust_score == pytest.approx(1.0)
+    assert feed_state["b"].trust_score == pytest.approx(1.0)
