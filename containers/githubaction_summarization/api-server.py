@@ -13,8 +13,10 @@ from pathlib import Path
 from typing import Any, Dict
 
 from flask import Flask, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for cross-origin requests
 
 # Container metadata
 CONTAINER_NAME = "weirdness-githubaction"

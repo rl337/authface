@@ -43,7 +43,15 @@ RUN chmod +x /runner/setup-runner.sh /runner/entrypoint.sh
 COPY containers/githubaction_summarization/api-server.py /app/api/api-server.py
 
 # Install Python dependencies
-RUN pip3 install --no-cache-dir aiohttp feedparser PyYAML transformers torch numpy flask
+RUN pip3 install --no-cache-dir \
+    aiohttp \
+    feedparser \
+    PyYAML \
+    transformers \
+    torch \
+    numpy \
+    flask \
+    flask-cors
 
 # Expose health endpoints
 EXPOSE 8080
