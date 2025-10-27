@@ -1,12 +1,22 @@
-FROM rl337/callableapis:base
+FROM alpine:latest
 
 # Metadata
 LABEL maintainer="rl337"
 LABEL description="GitHub Actions self-hosted runner for weirdness data pipeline"
 LABEL container="weirdness-githubaction"
 
-# Install only additional system dependencies (bash, curl, git, python3, pip3 already in base)
-RUN apk add --no-cache python3-dev gcc g++ musl-dev linux-headers
+# Install system dependencies
+RUN apk add --no-cache \
+    bash \
+    curl \
+    git \
+    python3 \
+    python3-dev \
+    py3-pip \
+    gcc \
+    g++ \
+    musl-dev \
+    linux-headers
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
