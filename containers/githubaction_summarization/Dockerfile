@@ -43,15 +43,15 @@ RUN chmod +x /runner/setup-runner.sh /runner/entrypoint.sh
 COPY containers/githubaction_summarization/api-server.py /app/api/api-server.py
 
 # Install Python dependencies (--break-system-packages needed for Alpine 3.19+)
-# Note: torch is very large and may cause issues, installing separately
-RUN pip3 install --break-system-packages --no-cache-dir \
-    aiohttp \
-    feedparser \
-    PyYAML \
-    flask \
-    flask-cors \
-    numpy \
-    && pip3 install --break-system-packages --no-cache-dir transformers torch || echo "Warning: torch installation failed"
+# Install lighter dependencies first, torch can be large
+RUN pip3 install --break-system-packages --no-cache-dir flask flask-cors
+
+# Install other dependencies
+RUN pip3 install --break-system-packages --no-cache-dir aiohttp feedparser PyYAML
+
+# Install numpy and transformers/torch last (these are large)
+RUN pip3 install --break-system-packages --no-cache-dir numpy || echo "numpy install skipped"
+RUN pip3 install --break-system-packages --no-cache-dir transformers torch || echo "torch install skipped"
 
 # Expose health endpoints
 EXPOSE 8080
