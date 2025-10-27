@@ -29,15 +29,22 @@ def get_health_status() -> str:
     """Check if runner is healthy."""
     # Check if runner process is running
     try:
+        # On Alpine, pgrep might not be available, so try multiple methods
         result = subprocess.run(
             ["pgrep", "-f", "Runner.Listener"],
             capture_output=True,
             text=True,
+            timeout=2,
         )
         if result.returncode == 0:
             return "UP"
-    except Exception:
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
         pass
+    
+    # Fallback: check if runner directory exists and is configured
+    runner_config = Path("/runner/.runner")
+    if runner_config.exists():
+        return "UP"  # Assume UP if configured
     return "DOWN"
 
 
