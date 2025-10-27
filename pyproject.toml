@@ -1,0 +1,37 @@
+[project]
+name = "weirdness"
+version = "0.1.0"
+description = "Data correlation pipeline that polls trusted public feeds twice daily, correlates overlapping stories, and publishes structured releases with evolving trust scores for each source"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "aiohttp>=3.9.0",
+    "feedparser>=6.0.0",
+    "PyYAML>=6.0.0",
+    "transformers>=4.39.0",
+    "torch>=2.2.0",
+    "numpy<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.1.0",
+    "coverage>=7.4.0",
+    "mypy>=1.9.0",
+]
+
+[project.scripts]
+weirdness = "collector.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["collector"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.1.0",
+    "coverage>=7.4.0",
+    "mypy>=1.9.0",
+]
