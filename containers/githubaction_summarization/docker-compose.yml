@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  github-runner:
+    build:
+      context: ../..
+      dockerfile: containers/githubaction_summarization/Dockerfile
+    container_name: weirdness-github-runner
+    restart: unless-stopped
+    
+    # Mount models directory for persistence
+    volumes:
+      - ./models:/app/models
+      - ./work:/runner/_work
+    
+    environment:
+      # GitHub repository and token
+      - GITHUB_REPO=${GITHUB_REPO:-https://github.com/rl337/weirdness}
+      - RUNNER_TOKEN=${RUNNER_TOKEN}
+      
+      # Model caching
+      - TRANSFORMERS_CACHE=/app/models
+      - HF_HOME=/app/models
+      
+      # Python environment
+      - PYTHONPATH=/app/models/.site-packages
+    
+    # Network configuration
+    network_mode: host
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+

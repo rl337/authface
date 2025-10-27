@@ -1,0 +1,12 @@
+models/
+work/
+.env
+*.log
+.git/
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+data/releases/*
+!data/releases/.gitkeep
+
