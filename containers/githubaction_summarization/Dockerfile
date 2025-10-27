@@ -1,30 +1,40 @@
-FROM ubuntu:22.04
+FROM rl337/callableapis:base
+
+# Metadata
+LABEL maintainer="rl337"
+LABEL description="GitHub Actions self-hosted runner for weirdness data pipeline"
+LABEL container="weirdness-githubaction"
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
+    bash \
     curl \
     git \
-    python3.12 \
-    python3-pip \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    python3 \
+    python3-dev \
+    py3-pip \
+    py3-virtualenv \
+    gcc \
+    g++ \
+    musl-dev \
+    linux-headers
 
 # Install uv for faster Python package management
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 RUN chmod +x /usr/local/bin/uv
 
-# Install uv dependencies for the weirdness project
-WORKDIR /workspace
-COPY ../../pyproject.toml ../../.python-version ./
-COPY ../../collector ./collector
-
-# Create model cache directory
-RUN mkdir -p /app/models
+# Create directories
+WORKDIR /app
+RUN mkdir -p /app/models /app/api
 
 # Set environment variables for model caching
 ENV TRANSFORMERS_CACHE=/app/models
 ENV HF_HOME=/app/models
-ENV PIP_CACHE_DIR=/app/models/.pip_cache
+ENV PYTHONPATH=/app/models/.site-packages:$PYTHONPATH
+
+# Copy project files
+COPY ../../pyproject.toml ../../.python-version ./
+COPY ../../collector ./collector
 
 # Setup GitHub Actions Runner
 WORKDIR /runner
@@ -33,13 +43,16 @@ WORKDIR /runner
 COPY setup-runner.sh .
 RUN chmod +x setup-runner.sh
 
-# Pre-download Python dependencies (optional, speeds up first run)
-RUN pip3 install httpx aiohttp feedparser PyYAML transformers torch numpy --target /app/models/.site-packages
-ENV PYTHONPATH=/app/models/.site-packages:$PYTHONPATH
+# Install Python dependencies with uv
+RUN uv pip install --system aiohttp feedparser PyYAML transformers torch numpy flask
 
-# Create entrypoint
+# Copy API server and entrypoint
+COPY api-server.py /app/api/
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
+
+# Expose health and status endpoints
+EXPOSE 8080
 
 ENTRYPOINT ["/runner/entrypoint.sh"]
 

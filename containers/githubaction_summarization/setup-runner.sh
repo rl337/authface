@@ -20,14 +20,14 @@ if [ ! -d "bin" ]; then
   tar xzf ./actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz
 fi
 
-# Install dependencies
+# Install dependencies (use our built dependencies since we're in Alpine)
 echo "Installing runner dependencies..."
-sudo ./bin/installdependencies.sh
+./bin/installdependencies.sh || echo "Dependencies already installed or failed"
 
 # Configure runner
 if [ ! -f ".runner" ]; then
   echo "Configuring runner for ${GITHUB_URL}..."
-  ./config.sh --url "${GITHUB_URL}" --token "${RUNNER_TOKEN}" --name "docker-runner" --work "_work" --replace
+  ./config.sh --url "${GITHUB_URL}" --token "${RUNNER_TOKEN}" --name "weirdness-githubaction-runner" --work "_work" --replace
 fi
 
 echo "Runner setup complete!"
