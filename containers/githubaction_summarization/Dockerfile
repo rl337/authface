@@ -42,8 +42,8 @@ RUN chmod +x /runner/setup-runner.sh /runner/entrypoint.sh
 # Copy API server (from container directory, build context is repo root)
 COPY containers/githubaction_summarization/api-server.py /app/api/api-server.py
 
-# Install Python dependencies
-RUN pip3 install --no-cache-dir \
+# Install Python dependencies (--break-system-packages needed for Alpine 3.19+)
+RUN pip3 install --break-system-packages --no-cache-dir \
     aiohttp \
     feedparser \
     PyYAML \
