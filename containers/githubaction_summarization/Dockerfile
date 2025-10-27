@@ -24,13 +24,13 @@ ENV TRANSFORMERS_CACHE=/app/models \
 COPY pyproject.toml .python-version /app/
 COPY collector /app/collector
 
-# Copy runner scripts
-COPY containers/githubaction_summarization/setup-runner.sh /runner/
-COPY containers/githubaction_summarization/entrypoint.sh /runner/
+# Copy runner scripts (from container directory, build context is repo root)
+COPY containers/githubaction_summarization/setup-runner.sh /runner/setup-runner.sh
+COPY containers/githubaction_summarization/entrypoint.sh /runner/entrypoint.sh
 RUN chmod +x /runner/setup-runner.sh /runner/entrypoint.sh
 
-# Copy API server
-COPY containers/githubaction_summarization/api-server.py /app/api/
+# Copy API server (from container directory, build context is repo root)
+COPY containers/githubaction_summarization/api-server.py /app/api/api-server.py
 
 # Install Python dependencies
 RUN pip3 install --no-cache-dir aiohttp feedparser PyYAML transformers torch numpy flask
