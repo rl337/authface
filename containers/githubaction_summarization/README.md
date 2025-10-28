@@ -169,3 +169,4 @@ docker-compose down -v  # Also removes volumes
 rm -rf models work      # Removes persisted data
 ```
 
+# Container build test
