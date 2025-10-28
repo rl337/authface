@@ -9,6 +9,7 @@ on:
       - 'collector/**'
       - 'pyproject.toml'
       - '.python-version'
+      - '.github/workflows/container-build.yml'
   pull_request:
     branches:
       - main
