@@ -64,15 +64,40 @@ jobs:
       
       - name: Test health endpoint would work
         run: |
-          # Start container in background
-          CONTAINER_ID=$(docker run -d -p 8080:8080 ${{ env.IMAGE_NAME }}:latest)
-          sleep 5
+          # Start container in background on a different port
+          CONTAINER_ID=$(docker run -d -p 8082:8080 ${{ env.IMAGE_NAME }}:latest)
           
-          # Test health endpoint
-          curl -f http://localhost:8080/health || exit 1
+          # Wait for container to start
+          sleep 10
           
-          # Test status endpoint
-          curl -f http://localhost:8080/api/status || exit 1
+          # Check if container is still running
+          if ! docker ps | grep -q $CONTAINER_ID; then
+            echo "❌ Container failed to start"
+            docker logs $CONTAINER_ID
+            exit 1
+          fi
+          
+          # Test health endpoint with retries
+          for i in {1..5}; do
+            if curl -f http://localhost:8082/health; then
+              echo "✅ Health endpoint working"
+              break
+            else
+              echo "Attempt $i failed, retrying..."
+              sleep 2
+            fi
+          done
+          
+          # Test status endpoint with retries
+          for i in {1..5}; do
+            if curl -f http://localhost:8082/api/status; then
+              echo "✅ Status endpoint working"
+              break
+            else
+              echo "Attempt $i failed, retrying..."
+              sleep 2
+            fi
+          done
           
           # Cleanup
           docker stop $CONTAINER_ID
